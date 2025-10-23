@@ -1,0 +1,95 @@
+0. important info
+https://www.kernel.org/doc/Documentation/usb/gadget_configfs.txt
+
+1. enable OTG
+echo "dtoverlay=dwc2" | sudo tee -a /boot/config.txt
+echo "dwc2" | sudo tee -a /etc/modules
+
+from https://github.com/girst/sendHID-mirror-of-git.gir.st/blob/master/README.md
+
+2. enable libcomposite driver
+sudo echo "libcomposite" | sudo tee -a /etc/modules
+
+from http://www.isticktoit.net/?p=1383
+
+3.
+sudo touch /usr/bin/isticktoit_usb #create the file
+sudo chmod +x /usr/bin/isticktoit_usb #make it executable
+sudo nano /usr/bin/isticktoit_usb #edit the file
+
+from from http://www.isticktoit.net/?p=1383
+
+// alternative
+
+sudo touch /usr/bin/xac_joystick_usb
+sudo chmod +x /usr/bin/xac_joystick_usb
+
+from https://github.com/milador/RaspberryPi-Joystick
+
+4. make HID config autoexecutable
+sudo nano /etc/rc.local #open this file
+/usr/bin/xac_joystick_usb # add before "exit 0"; XAC libcomposite configuration
+*you can create a systemd unit file for better performance??
+
+5.https://github.com/milador/RaspberryPi-Joystick
+#!/bin/bash
+
+sleep 10
+
+modprobe libcomposite
+
+# Create joystick gadget
+cd /sys/kernel/config/usb_gadget/
+mkdir -p tabletjoyusb
+cd tabletjoyusb
+
+sudo su
+
+# Define USB specification
+echo 0x1d6b > idVendor # Linux Foundation
+echo 0x0104 > idProduct # Multifunction Composite Joystick Gadget
+echo 0x0100 > bcdDevice # v1.0.0
+echo 0x0200 > bcdUSB # USB2
+echo 0xEF > bDeviceClass
+echo 0x02 > bDeviceSubClass
+echo 0x01 > bDeviceProtocol
+
+# Perform localization
+mkdir -p strings/0x409
+
+echo "0123456789" > strings/0x409/serialnumber
+echo "Raspberry Pi" > strings/0x409/manufacturer
+echo "tabletjoyusbPRODUCT" > strings/0x409/product
+
+
+# Define the functions of the device
+mkdir functions/hid.usb0
+echo 0 > functions/hid.usb0/protocol
+echo 0 > functions/hid.usb0/subclass
+echo 3 > functions/hid.usb0/report_length
+
+# Write report descriptor ( X and Y analog joysticks plus 8 buttons )
+echo "05010904A1011581257F0901A10009300931750895028102C005091901290815002501750195088102C0" | xxd -r -ps > functions/hid.usb0/report_desc
+
+# Create configuration file
+mkdir configs/c.1
+mkdir configs/c.1/strings/0x409
+
+echo 0x80 > configs/c.1/bmAttributes
+#echo 200 > configs/c.1/MaxPower # 200 mA
+echo "USBtabletjoystick configuration" > configs/c.1/strings/0x409/configuration
+
+# Link the configuration file
+ln -s functions/hid.usb0 configs/c.1
+
+# Activate device 
+ls /sys/class/udc > UDC
+
+sleep 10
+
+
+6. pip3 install evdev
+7. https://eleccelerator.com/tutorial-about-usb-hid-report-descriptors/
+https://python-evdev.readthedocs.io/en/latest/tutorial.html
+http://who-t.blogspot.com/2018/12/understanding-hid-report-descriptors.html
+
