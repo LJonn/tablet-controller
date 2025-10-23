@@ -1,0 +1,44 @@
+\[Unit]
+
+Description=Dual GAOMON Tablet to USB Joystick Service
+
+After=multi-user.target
+
+
+
+\[Service]
+
+Type=simple
+
+
+
+\# This first command runs the one-time setup script
+
+ExecStartPre=/usr/bin/tabletjoyusb
+
+
+
+\# This is the main command that runs your Python script continuously
+
+\# !!! CHANGE THE PATH BELOW TO YOUR ACTUAL PYTHON SCRIPT'S PATH !!!
+
+ExecStart=/usr/bin/python3 /home/pi/tablet\_manager.py
+
+
+
+\# Automatically restart the script if it ever crashes
+
+Restart=always
+
+
+
+\# The script needs root privileges to grab devices and write to hidg0
+
+User=root
+
+
+
+\[Install]
+
+WantedBy=multi-user.target
+
